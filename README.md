@@ -27,10 +27,26 @@ decorated_by = ["pydantic.field_validator"]
 
 | Rule | Declares used |
 |---|---|
-| `used` | functions, methods and classes matching `decorated_by`, `names`, `in_classes_inheriting` (methods) or `inherits` (classes); every selector given must match |
-| `fields_used` | attributes of classes matching `decorated_by`, `inherits` or `names`, and of their subclasses |
-| `parameters_used` | the parameters of functions matching `decorated_by`, `names` or `in_classes_inheriting` |
+| `used` | functions, methods and classes matching `decorated_by`, `names`, `in_classes_inheriting` or `in_classes_based_on` (methods), or `inherits` (classes); every selector given must match |
+| `fields_used` | attributes of classes matching any of `decorated_by`, `inherits` or `names`, and of their subclasses |
+| `parameters_used` | the parameters of functions matching `decorated_by`, `names`, `in_classes_inheriting` or `in_classes_based_on`; every selector given must match |
 | `injected_by_name` | providers (fixtures) requested through consumers' parameter names, a decorator keyword, or calls such as `usefixtures` |
+| `variables_used` | module and class variables with these `names` (`pytestmark`), in files that import the library |
+
+`in_classes_inheriting` follows the class hierarchy across the project;
+`in_classes_based_on` only looks at a class's own bases (a `Protocol` is a
+class listing `Protocol` itself; its concrete subclasses are not protocols).
+Bases are resolved through each file's imports, so an unrelated class with
+the same name elsewhere does not match.
+
+Rules without a class hierarchy to follow (decorator patterns such as
+`*.get`, class `names` such as `Meta`) apply in files that import a
+`when_imported` module, and to decorators whose object is imported
+(`from myapp import app` then `@app.route`).
+
+Selector lists must not be empty (leave the key out instead), and
+`when_imported` takes top-level module names. JSON plugins may set
+`"$schema"` for editor support.
 
 Names are dotted names as imported (`pydantic.BaseModel`, not `BaseModel`),
 with glob wildcards. condor resolves names through each file's imports.
