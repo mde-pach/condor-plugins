@@ -31,7 +31,7 @@ decorated_by = ["pydantic.field_validator"]
 | `fields_used` | attributes of classes matching any of `decorated_by`, `inherits` or `names`, and of their subclasses: `annotated` (`x: int`, the default), `assigned` (`X = 1`), `calls` (assigned a call, `name = models.CharField()`) or `all`, given as `fields`; `attributes` limits the rule to these names (a framework's options) |
 | `parameters_used` | the parameters of functions matching `decorated_by`, `names`, `in_classes_inheriting` or `in_classes_based_on`; every selector given must match |
 | `injected_by_name` | providers (fixtures) requested through consumers' parameter names, a decorator keyword, or calls such as `usefixtures` |
-| `variables_used` | module and class variables with these `names` (`pytestmark`), in files that import the library |
+| `variables_used` | module and class variables with these `names` (`pytestmark`), in files that import the library; with `modules`, the module-level variables with these `names` in these modules (Django settings), whether or not they import the library |
 
 `in_classes_inheriting` follows the class hierarchy across the project;
 `in_classes_based_on` only looks at a class's own bases (a `Protocol` is a
@@ -43,6 +43,21 @@ Rules without a class hierarchy to follow (decorator patterns such as
 `*.get`, class `names` such as `Meta`) apply in files that import a
 `when_imported` module, and to decorators whose object is imported
 (`from myapp import app` then `@app.route`).
+
+`modules` (in `variables_used`) takes dotted module names with glob
+wildcards. condor does not know a project's import root, so a file matches
+if its name relative to any directory of the project (the deepest one
+holding every scanned file) does: `settings.*` matches
+`config/settings/base.py` (`settings.base`), `settings` matches any
+`settings.py` or `settings/__init__.py`. Such a rule applies whether or not the module
+imports the library, but the plugin still needs a `when_imported` module
+imported somewhere in the project:
+
+```toml
+[[variables_used]]                # Django reads every upper-case setting
+modules = ["settings", "settings.*"]
+names = ["[A-Z]*"]
+```
 
 Selector lists must not be empty (leave the key out instead), and
 `when_imported` takes top-level module names. JSON plugins may set
